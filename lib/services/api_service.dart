@@ -1,97 +1,123 @@
-// File: api_services.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:uuid/uuid.dart';
+import 'package:crypto/crypto.dart';
 
-class ApiService {
-  static const String _baseUrl = 'https://backendpayment.onrender.com';
-  final _storage = const FlutterSecureStorage();
+const String baseUrl = "https://backendpayment.onrender.com";
 
-  Future<String?> _getToken() async {
-    return await _storage.read(key: 'auth_token');
+Future<Map<String, dynamic>> registerUser(Map<String, dynamic> user) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/auth/register'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(user),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body)['user'];
+  } else {
+    throw Exception('Failed to register user: ${response.statusCode}');
   }
+}
 
-  Map<String, String> _headers(String? token) => {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      };
+Future<String> loginUser(String identifier, String password) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/auth/login'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode({
+      'identifier': identifier,
+      'password': password,
+    }),
+  );
 
-  /// 1.1 Register User
-  Future<Map<String, dynamic>> registerUser(Map<String, dynamic> userData) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/auth/register'),
-      headers: _headers(null),
-      body: jsonEncode(userData),
-    );
-    return _processResponse(response);
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body)['token'];
+  } else {
+    throw Exception('Failed to login: ${response.statusCode}');
   }
+}
 
-  /// 1.2 Login User
-  Future<Map<String, dynamic>> loginUser(String identifier, String password) async {
-    final response = await http.post(
-      Uri.parse('$_baseUrl/auth/login'),
-      headers: _headers(null),
-      body: jsonEncode({'identifier': identifier, 'password': password}),
-    );
+Future<Map<String, dynamic>> initiateOnlinePayment(
+    String token, String senderId, String recipientId, double amount) async {
+  final payload = {
+    "sender_id": senderId,
+    "recipient_id": recipientId,
+    "amount": amount,
+    "currency": "INR",
+    "description": "Flutter Test Online Payment",
+    "transaction_type": "TEST",
+    "timestamp": DateTime.now().toUtc().toIso8601String() + "Z",
+  };
 
-    final result = _processResponse(response);
-    if (response.statusCode == 200) {
-      _storage.write(key: 'auth_token', value: result['token']);
-    }
-    return result;
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/payment/initiate'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $token',
+    },
+    body: jsonEncode(payload),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Failed to initiate online payment: ${response.statusCode}');
   }
+}
 
-  /// 2.1 Get Wallet Balance
-  Future<Map<String, dynamic>> getWalletBalance() async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/wallet'),
-      headers: _headers(token),
-    );
-    return _processResponse(response);
+Future<Map<String, dynamic>> syncOfflineTransaction(
+    String token, String userId, String recipientIdentifier, double amount) async {
+  const uuid = Uuid();
+  final localTxId = uuid.v4();
+  final timestamp = DateTime.now().toUtc().toIso8601String() + "Z";
+  final sigStr = '$userId|$recipientIdentifier|$amount|INR|$timestamp';
+  final encryptedData = sha256.convert(utf8.encode(sigStr)).toString();
+
+  final record = {
+    "local_transaction_id": localTxId,
+    "recipient_identifier": recipientIdentifier,
+    "amount": amount,
+    "currency": "INR",
+    "timestamp": timestamp,
+    "encrypted_data": encryptedData,
+  };
+
+  final payload = {
+    "user_id": userId,
+    "device_id": uuid.v4(),
+    "transactions": [record],
+  };
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/offline/sync'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $token',
+    },
+    body: jsonEncode(payload),
+  );
+
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Failed to sync offline transaction: ${response.statusCode}');
   }
+}
 
-  /// 3.1 Initiate Payment
-  Future<Map<String, dynamic>> initiatePayment(Map<String, dynamic> paymentData) async {
-    final token = await _getToken();
-    final response = await http.post(
-      Uri.parse('$_baseUrl/payment/initiate'),
-      headers: _headers(token),
-      body: jsonEncode(paymentData),
-    );
-    return _processResponse(response);
-  }
+Future<List<dynamic>> fetchAllTransactions(String token) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/api/transactions'),
+    headers: <String, String>{
+      'Authorization': 'Bearer $token',
+    },
+  );
 
-  /// 4.1 Sync Offline Transactions
-  Future<Map<String, dynamic>> syncOfflineTransactions(Map<String, dynamic> syncData) async {
-    final token = await _getToken();
-    final response = await http.post(
-      Uri.parse('$_baseUrl/offline/sync'),
-      headers: _headers(token),
-      body: jsonEncode(syncData),
-    );
-    return _processResponse(response);
-  }
-
-  /// 5.1 Get Transaction History
-  Future<List<dynamic>> getTransactionHistory() async {
-    final token = await _getToken();
-    final response = await http.get(
-      Uri.parse('$_baseUrl/transactions'),
-      headers: _headers(token),
-    );
-    final decoded = _processResponse(response);
-    return decoded is List ? decoded : [];
-  }
-
-  /// Handles all HTTP responses
-  dynamic _processResponse(http.Response response) {
-    final body = jsonDecode(response.body);
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return body;
-    } else {
-      throw Exception(body['error'] ?? 'Unexpected error');
-    }
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  } else {
+    throw Exception('Failed to fetch transactions: ${response.statusCode}');
   }
 }
