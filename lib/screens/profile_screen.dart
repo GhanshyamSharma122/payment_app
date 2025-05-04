@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:payment_app/utils/theme.dart';
 import 'package:payment_app/utils/theme_provider.dart';
+import 'package:payment_app/utils/common_widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:payment_app/screens/authentication_screen.dart';
+import 'package:payment_app/screens/qr_code_screen.dart'; // Import QR code screen
+import 'package:payment_app/screens/coming_soon_screen.dart'; // Import coming soon screen
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -13,36 +16,7 @@ class ProfileScreen extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Profile',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: 24,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-          size: 28, // Slightly larger icon
-        ),
-      ),
+      appBar: commonAppBar(title: 'Profile', context: context),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -67,17 +41,26 @@ class ProfileScreen extends StatelessWidget {
                   _MenuItem(
                     icon: Icons.person_outline,
                     title: 'Personal Information',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Personal Information')),
+                    ),
                   ),
                   _MenuItem(
                     icon: Icons.security,
                     title: 'Security Settings',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Security Settings')),
+                    ),
                   ),
                   _MenuItem(
                     icon: Icons.payment,
                     title: 'Payment Methods',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Payment Methods')),
+                    ),
                   ),
                 ],
               ),
@@ -88,16 +71,22 @@ class ProfileScreen extends StatelessWidget {
                   _MenuItem(
                     icon: Icons.notifications_outlined,
                     title: 'Notification Settings',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Notification Settings')),
+                    ),
                   ),
                   _MenuItem(
                     icon: Icons.language,
                     title: 'Language',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Language Settings')),
+                    ),
                   ),
                   _MenuItem(
-                    icon: Icons.color_lens_outlined, // Changed from light/dark mode icon to color lens icon
-                    title: 'Change Color Theme', // Fixed label regardless of theme state
+                    icon: Icons.color_lens_outlined,
+                    title: 'Change Color Theme',
                     onTap: () => themeProvider.toggleTheme(),
                   ),
                 ],
@@ -109,12 +98,18 @@ class ProfileScreen extends StatelessWidget {
                   _MenuItem(
                     icon: Icons.help_outline,
                     title: 'Help Center',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Help Center')),
+                    ),
                   ),
                   _MenuItem(
                     icon: Icons.privacy_tip_outlined,
                     title: 'Privacy Policy',
-                    onTap: () {},
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Privacy Policy')),
+                    ),
                   ),
                   _MenuItem(
                     icon: Icons.logout,
@@ -208,17 +203,26 @@ class _QuickActions extends StatelessWidget {
         _QuickActionItem(
           icon: Icons.qr_code,
           label: 'QR Code',
-          onTap: () {},
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const QRCodeScreen()),
+          ),
         ),
         _QuickActionItem(
           icon: Icons.share,
           label: 'Share',
-          onTap: () {},
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Share')),
+          ),
         ),
         _QuickActionItem(
           icon: Icons.edit,
           label: 'Edit',
-          onTap: () {},
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ComingSoonScreen(featureName: 'Profile Edit')),
+          ),
         ),
       ],
     );
@@ -310,7 +314,7 @@ class _MenuSection extends StatelessWidget {
           margin: EdgeInsets.zero,
           color: isDarkMode 
               ? Colors.white.withOpacity(0.1) // Semi-transparent for dark mode
-              : Colors.white.withOpacity(0.9), // More opaque for light mode
+              : Colors.white, // Fully opaque for light mode for better contrast
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
@@ -349,19 +353,20 @@ class _MenuItem extends StatelessWidget {
         icon,
         color: isDestructive 
             ? Colors.red 
-            : (isDarkMode ? Colors.white70 : Colors.black87),
+            : (isDarkMode ? Colors.white70 : Colors.purple.shade800),
       ),
       title: Text(
         title,
         style: TextStyle(
           color: isDestructive 
               ? Colors.red 
-              : (isDarkMode ? Colors.white : Colors.black87),
+              : (isDarkMode ? Colors.white : Colors.purple.shade900),
+          fontWeight: FontWeight.w500,
         ),
       ),
       trailing: Icon(
         Icons.chevron_right,
-        color: isDarkMode ? Colors.white54 : Colors.black54,
+        color: isDarkMode ? Colors.white54 : Colors.purple.shade800,
       ),
       onTap: onTap,
     );

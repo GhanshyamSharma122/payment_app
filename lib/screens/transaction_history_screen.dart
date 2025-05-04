@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:payment_app/services/api_service.dart';
 import 'package:payment_app/utils/theme.dart';
+import 'package:payment_app/utils/common_widgets.dart';
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
@@ -46,36 +47,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     
     return Scaffold(
       backgroundColor: isDarkMode ? AppTheme.darkBackgroundColor : null,
-      appBar: AppBar(
-        title: const Text(
-          'Transaction History',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: 24,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
+      appBar: commonAppBar(title: 'Transaction History', context: context),
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -95,7 +67,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     child: Text(
                       'No transactions yet',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withAlpha(204), // Replacing with explicit alpha channel
                         fontSize: 16,
                       ),
                     ),
@@ -105,7 +77,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     itemCount: transactions.length,
                     separatorBuilder: (_, __) => Divider(
                       height: 32,
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withAlpha(26), // Replacing with explicit alpha channel
                     ),
                     itemBuilder: (context, index) {
                       final transaction = transactions[index];
@@ -119,7 +91,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: isDarkMode 
-                                ? Colors.white.withOpacity(0.1)
+                                ? Colors.white.withAlpha(26) // Replacing with explicit alpha channel
                                 : AppTheme.greyColor,
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -137,14 +109,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                               ? 'Received from ${transaction['sender']}'
                               : 'Sent to ${transaction['receiver']}',
                           style: TextStyle(
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                            color: Colors.white, // Always white for better visibility on gradient
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         subtitle: Text(
                           '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}',
                           style: TextStyle(
-                            color: isDarkMode ? Colors.white70 : Colors.black54,
+                            color: Colors.white.withAlpha(179), // Replacing with explicit alpha channel
                           ),
                         ),
                         trailing: Text(

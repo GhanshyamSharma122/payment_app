@@ -259,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(width: 8),
-                      InkWell(
+                      GestureDetector(
                         onTap: () {
                           Navigator.push(
                             context,
@@ -268,18 +268,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         },
-                        child: const CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Colors.white24,
-                          child: Icon(
-                            Icons.person_outline,
-                            color: Colors.white,
-                          ),
+                        child: Icon(
+                          Icons.person_outline,
+                          color: Colors.white,
+                          size: 28,
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.logout, color: Colors.white),
-                        onPressed: _logout,
                       ),
                     ],
                   ),
@@ -536,7 +529,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(
                               'See All',
                               style: TextStyle(
-                                color: AppTheme.accentColor,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : AppTheme.accentColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -590,7 +585,7 @@ class _QuickActionCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       color: isDarkMode 
           ? Colors.white.withOpacity(0.1) // Semi-transparent white for dark mode
-          : Colors.white,                  // Solid white for light mode
+          : Colors.white,                  // Solid white in light mode
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.2),
       shape: RoundedRectangleBorder(
@@ -633,7 +628,9 @@ class _QuickActionCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : Colors.black87,
+                  color: isDarkMode 
+                      ? Colors.white 
+                      : AppTheme.primaryColor, // Dark text in light mode for better contrast
                 ),
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:payment_app/services/api_service.dart';
 import 'package:payment_app/utils/theme.dart';
+import 'package:payment_app/utils/common_widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -140,36 +141,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     
     return Scaffold(
       backgroundColor: isDarkMode ? AppTheme.darkBackgroundColor : AppTheme.backgroundColor,
-      appBar: AppBar(
-        title: const Text(
-          'Send Money',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: 24,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
+      appBar: commonAppBar(title: 'Send Money', context: context),
       body: Container(
         width: double.infinity,
         height: double.infinity,

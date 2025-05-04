@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:payment_app/utils/theme.dart';
+import 'package:payment_app/utils/common_widgets.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -37,40 +38,14 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         backgroundColor: isDarkMode ? AppTheme.darkBackgroundColor : AppTheme.backgroundColor,
-        appBar: AppBar(
-          title: const Text(
-            'QR Code',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 24,
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-          iconTheme: const IconThemeData(
-            color: Colors.white,
-            size: 28,
-          ),
+        appBar: commonAppBar(
+          title: 'QR Code',
+          context: context,
           bottom: TabBar(
             tabs: const [
               Tab(text: 'My QR'),
@@ -114,8 +89,8 @@ class _MyQRView extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: isDarkMode 
-              ? AppTheme.darkGradientColors 
+          colors: isDarkMode
+              ? AppTheme.darkGradientColors
               : AppTheme.gradientColors,
         ),
       ),
@@ -199,14 +174,14 @@ class _ScanQRView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: isDarkMode 
-              ? AppTheme.darkGradientColors 
+          colors: isDarkMode
+              ? AppTheme.darkGradientColors
               : AppTheme.gradientColors,
         ),
       ),

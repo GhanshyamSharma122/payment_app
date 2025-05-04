@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:payment_app/utils/theme.dart';
+import 'package:payment_app/utils/common_widgets.dart';
 
 class RewardsScreen extends StatelessWidget {
   const RewardsScreen({super.key});
@@ -9,36 +10,7 @@ class RewardsScreen extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'TapKaro Rewards',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: 24,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
+      appBar: commonAppBar(title: 'TapKaro Rewards', context: context),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -211,7 +183,7 @@ class _OfferCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black87,
+                        color: isDarkMode ? Colors.white : AppTheme.primaryColor, // Better contrast in light mode
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -219,7 +191,7 @@ class _OfferCard extends StatelessWidget {
                       description,
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDarkMode ? Colors.white70 : Colors.black54,
+                        color: isDarkMode ? Colors.white70 : Colors.black87, // Better contrast in light mode
                       ),
                     ),
                   ],
@@ -227,7 +199,7 @@ class _OfferCard extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right,
-                color: isDarkMode ? Colors.white70 : Colors.grey.shade700,
+                color: isDarkMode ? Colors.white70 : AppTheme.primaryColor, // Better contrast
               ),
             ],
           ),
@@ -317,13 +289,13 @@ class _RewardItem extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: isDarkMode ? Colors.white : Colors.black87,
+            color: isDarkMode ? Colors.white : AppTheme.primaryColor, // Better contrast in light mode
           ),
         ),
         subtitle: Text(
           subtitle,
           style: TextStyle(
-            color: isDarkMode ? Colors.white70 : Colors.black54,
+            color: isDarkMode ? Colors.white70 : Colors.black87, // Better contrast in light mode
             fontSize: 13,
           ),
         ),
@@ -338,7 +310,7 @@ class _RewardItem extends StatelessWidget {
           child: Text(
             '$points pts',
             style: TextStyle(
-              color: isDarkMode ? Colors.white : Colors.purple,
+              color: isDarkMode ? Colors.white : AppTheme.primaryColor, // Better contrast in light mode
               fontWeight: FontWeight.bold,
               fontSize: 14,
             ),
