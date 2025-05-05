@@ -5,9 +5,11 @@ import 'package:payment_app/screens/rewards_screen.dart';
 import 'package:payment_app/screens/profile_screen.dart';
 import 'package:payment_app/screens/qr_code_screen.dart';
 import 'package:payment_app/screens/authentication_screen.dart';
-import 'package:payment_app/screens/coming_soon_screen.dart'; // Import the new coming soon screen
+import 'package:payment_app/screens/coming_soon_screen.dart'; 
 import 'package:payment_app/utils/theme.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
+import 'package:payment_app/services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +19,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String _username = "testuser"; // Variable to store username
+  String _username = "testuser"; // Default username
+  Map<String, dynamic>? _walletData;
+  bool _isLoadingWallet = true;
 
   final List<Map<String, dynamic>> notifications = [
     {
@@ -165,16 +169,66 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // If we want to load the username dynamically in the future
-    _loadUsername();
+    _loadUserData();
+    _fetchWalletBalance();
   }
 
-  Future<void> _loadUsername() async {
-    // For now using testuser as default
-    setState(() {
-      _username = "testuser"; 
-    });
-    // In a real app, you would fetch this from secure storage or user state
+  Future<void> _loadUserData() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final userData = await storage.read(key: 'user_data');
+      
+      if (userData != null) {
+        final user = jsonDecode(userData);
+        if (mounted) {
+          setState(() {
+            _username = user['username'] ?? user['first_name'] ?? "User";
+          });
+        }
+      }
+    } catch (e) {
+      // Fallback to default username if there's an error
+      print('Error loading user data: $e');
+    }
+  }
+
+  Future<void> _fetchWalletBalance() async {
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'auth_token') ?? "test_token";
+      
+      final wallet = await getWalletBalance(token);
+      
+      if (mounted) {
+        setState(() {
+          _walletData = wallet;
+          _isLoadingWallet = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching wallet balance: $e');
+      if (mounted) {
+        setState(() => _isLoadingWallet = false);
+      }
+    }
+  }
+
+  String _formatBalance(dynamic balance) {
+    if (balance == null) return '0.00';
+    
+    // Handle both numeric and string representations
+    if (balance is num) {
+      return balance.toStringAsFixed(2);
+    } else if (balance is String) {
+      try {
+        return double.parse(balance).toStringAsFixed(2);
+      } catch (e) {
+        print('Error formatting balance: $e');
+        return balance.toString();
+      }
+    }
+    
+    return '0.00';
   }
 
   @override
@@ -342,9 +396,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            '₹1,234.56',
-                            style: TextStyle(
+                          // Wallet balance text
+                          Text(
+                            _isLoadingWallet 
+                                ? 'Loading...' 
+                                : '₹${_formatBalance(_walletData?['balance'])}',
+                            style: const TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -360,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onTap: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const QRCodeScreen(),
+                                    builder: (_) => const QRCodeScreen(initialTabIndex: 1), // Open Scan QR tab
                                   ),
                                 ),
                               ),
@@ -370,7 +427,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 onTap: () => Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const QRCodeScreen(),
+                                    builder: (_) => const QRCodeScreen(initialTabIndex: 0), // Open My QR tab
                                   ),
                                 ),
                               ),

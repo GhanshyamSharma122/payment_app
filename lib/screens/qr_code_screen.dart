@@ -6,7 +6,12 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class QRCodeScreen extends StatefulWidget {
-  const QRCodeScreen({super.key});
+  final int initialTabIndex;
+
+  const QRCodeScreen({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   @override
   State<QRCodeScreen> createState() => _QRCodeScreenState();
@@ -41,6 +46,7 @@ class _QRCodeScreenState extends State<QRCodeScreen> {
 
     return DefaultTabController(
       length: 2,
+      initialIndex: widget.initialTabIndex,
       child: Scaffold(
         backgroundColor: isDarkMode ? AppTheme.darkBackgroundColor : AppTheme.backgroundColor,
         appBar: commonAppBar(

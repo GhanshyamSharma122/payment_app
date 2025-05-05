@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:payment_app/services/api_service.dart';
 import 'package:payment_app/screens/home_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:payment_app/utils/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class AuthenticationScreen extends StatefulWidget {
   const AuthenticationScreen({super.key});
@@ -18,8 +21,15 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  
+  DateTime? _dateOfBirth;
   bool _isLoading = false;
   bool _isLogin = true;
+  bool _passwordVisible = false;
+  
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -45,35 +55,81 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
     _usernameController.dispose();
     _passwordController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(2000, 1, 1),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppTheme.accentColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null && picked != _dateOfBirth) {
+      setState(() {
+        _dateOfBirth = picked;
+      });
+    }
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'Select Date';
+    return DateFormat('yyyy-MM-dd').format(date);
   }
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        String token;
+        Map<String, dynamic> response;
+        
         if (_isLogin) {
-          token = await loginUser(
+          response = await loginUser(
             _usernameController.text,
             _passwordController.text,
           );
         } else {
-          await registerUser({
+          // Registration with all required fields
+          final userData = {
             'username': _usernameController.text,
             'password': _passwordController.text,
             'email': _emailController.text,
-          });
-          token = await loginUser(
-            _usernameController.text,
-            _passwordController.text,
-          );
+            'phone_number': _phoneController.text,
+            'first_name': _firstNameController.text,
+            'last_name': _lastNameController.text,
+            'date_of_birth': _dateOfBirth != null ? DateFormat('yyyy-MM-dd').format(_dateOfBirth!) : null,
+          };
+          
+          response = await registerUser(userData);
         }
-
-        const storage = FlutterSecureStorage();
-        await storage.write(key: 'auth_token', value: token);
         
-        // Ensure the app starts in light mode - reset theme preference
+        // Store token in secure storage
+        const storage = FlutterSecureStorage();
+        await storage.write(key: 'auth_token', value: response['token']);
+        
+        // Store user data if needed
+        if (response['user'] != null) {
+          await storage.write(key: 'user_data', value: jsonEncode(response['user']));
+        }
+        
+        // Ensure the app starts in light mode
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isDark', false);
 
@@ -92,7 +148,10 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString())),
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: Colors.red.shade700,
+            ),
           );
         }
       } finally {
@@ -234,6 +293,102 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
                             return null;
                           },
                         ),
+                        if (!_isLogin) ...[
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _phoneController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'Phone Number',
+                              hintStyle: const TextStyle(color: Colors.white70),
+                              prefixIcon: const Icon(Icons.phone_android, color: Colors.white70),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            keyboardType: TextInputType.phone,
+                            validator: (value) {
+                              if (value?.isEmpty ?? true) {
+                                return 'Please enter your phone number';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _firstNameController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'First Name',
+                              hintStyle: const TextStyle(color: Colors.white70),
+                              prefixIcon: const Icon(Icons.person, color: Colors.white70),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value?.isEmpty ?? true) {
+                                return 'Please enter your first name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _lastNameController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              hintText: 'Last Name',
+                              hintStyle: const TextStyle(color: Colors.white70),
+                              prefixIcon: const Icon(Icons.person, color: Colors.white70),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value?.isEmpty ?? true) {
+                                return 'Please enter your last name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          GestureDetector(
+                            onTap: () => _selectDate(context),
+                            child: AbsorbPointer(
+                              child: TextFormField(
+                                controller: TextEditingController(text: _formatDate(_dateOfBirth)),
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  hintText: 'Date of Birth',
+                                  hintStyle: const TextStyle(color: Colors.white70),
+                                  prefixIcon: const Icon(Icons.calendar_today, color: Colors.white70),
+                                  filled: true,
+                                  fillColor: Colors.white.withOpacity(0.1),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (_dateOfBirth == null) {
+                                    return 'Please select your date of birth';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 24),
                         SizedBox(
                           width: double.infinity,
