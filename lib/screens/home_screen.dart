@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Keep for SystemUiOverlayStyle if used by AppBar
 import 'package:payment_app/screens/contact_screen.dart';
+import 'package:payment_app/screens/voice_payment_screen.dart';
 import 'package:payment_app/services/api_service.dart'; // Required for API calls
 import 'package:payment_app/screens/payment_screen.dart';
 import 'package:payment_app/screens/transaction_history_screen.dart';
@@ -264,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // --- Quick Actions Section (OLD STYLE) ---
                  Text( 'Quick Actions', style: TextStyle( fontSize: 18, fontWeight: FontWeight.bold, color: textOnGradient, ), ), // Use white/light text
                 const SizedBox(height: 12),
-                GridView.count( shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 3, mainAxisSpacing: 16, crossAxisSpacing: 16, children: [ _QuickActionCard( icon: Icons.send, label: 'Send Money', onTap: () => Navigator.push( context, MaterialPageRoute(builder: (_) => const PaymentScreen()), ), ), _QuickActionCard( icon: Icons.history, label: 'History', onTap: () => Navigator.push( context, MaterialPageRoute( builder: (_) => const TransactionHistoryScreen(), ), ), ), _QuickActionCard( icon: Icons.account_balance, label: 'Bank Transfer', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const ComingSoonScreen(),),),), _QuickActionCard( icon: Icons.contacts, label: 'Contacts', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const ContactScreen(),),),), _QuickActionCard( icon: Icons.movie, label: 'Movies', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const ComingSoonScreen(),),),), _QuickActionCard( icon: Icons.more_horiz, label: 'More', onTap: () {}, ), ], ),
+                GridView.count( shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 3, mainAxisSpacing: 16, crossAxisSpacing: 16, children: [ _QuickActionCard( icon: Icons.send, label: 'Send Money', onTap: () => Navigator.push( context, MaterialPageRoute(builder: (_) => const PaymentScreen()), ), ), _QuickActionCard( icon: Icons.history, label: 'History', onTap: () => Navigator.push( context, MaterialPageRoute( builder: (_) => const TransactionHistoryScreen(), ), ), ), _QuickActionCard( icon: Icons.mic_rounded  , label: 'Voice\nPay', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const VoicePaymentScreen(),),),), _QuickActionCard( icon: Icons.contacts, label: 'Contacts', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const ContactScreen(),),),), _QuickActionCard( icon: Icons.movie, label: 'Movies', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const ComingSoonScreen(),),),), _QuickActionCard( icon: Icons.more_horiz, label: 'More', onTap: () {}, ), ], ),
                  const SizedBox(height: 24),
 
                  // --- Recent Transactions Section (OLD STYLE Card Header) ---
