@@ -25,6 +25,7 @@ dependencies:
   permission_handler: ^11.3.0
   camera: ^0.10.5+9
   intl: ^0.18.1
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
