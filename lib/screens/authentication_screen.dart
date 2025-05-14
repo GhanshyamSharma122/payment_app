@@ -64,26 +64,28 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final ThemeData currentTheme = Theme.of(context); // Get current theme
+    final ThemeData currentTheme = Theme.of(context);
     final bool isDarkMode = currentTheme.brightness == Brightness.dark;
 
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _dateOfBirth ?? DateTime(2000, 1, 1),
       firstDate: DateTime(1950),
-      lastDate: DateTime.now().add(const Duration(days: 1)), // Allow today
-      // Use a builder to theme the DatePicker based on the main theme
+      lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
-          data: currentTheme.copyWith(
-            // Customize DatePicker colors based on the main theme's scheme
-            colorScheme: currentTheme.colorScheme.copyWith(
-              primary: isDarkMode ? AppTheme.darkAccentColor : AppTheme.accentColor, // Use defined accents
-              onPrimary: isDarkMode ? AppTheme.textPrimaryColorDark : Colors.white, // Text on primary selection
-              surface: isDarkMode ? AppTheme.darkSurfaceColor : AppTheme.surfaceColor, // Background of picker
-              onSurface: isDarkMode ? AppTheme.textPrimaryColorDark : AppTheme.textPrimaryColorLight, // Text color
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: isDarkMode ? AppTheme.darkAccentColor : AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              surface: isDarkMode ? AppTheme.darkSurfaceColor : Colors.white,
+              onSurface: isDarkMode ? Colors.white : Colors.black87,
             ),
-             dialogBackgroundColor: isDarkMode ? AppTheme.darkBackgroundColor : AppTheme.backgroundColor, // Dialog bg
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: isDarkMode ? AppTheme.darkAccentColor : AppTheme.primaryColor,
+              ),
+            ), dialogTheme: DialogThemeData(backgroundColor: isDarkMode ? AppTheme.darkBackgroundColor : Colors.white),
           ),
           child: child!,
         );
@@ -198,6 +200,25 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
     }
   }
 
+  // Add this function at class level
+  bool _isPasswordStrong(String password) {
+    if (password.length < 8) return false;
+    
+    // Check for at least one uppercase letter
+    if (!password.contains(RegExp(r'[A-Z]'))) return false;
+    
+    // Check for at least one lowercase letter
+    if (!password.contains(RegExp(r'[a-z]'))) return false;
+    
+    // Check for at least one digit
+    if (!password.contains(RegExp(r'[0-9]'))) return false;
+    
+    // Check for at least one special character
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) return false;
+    
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -300,14 +321,13 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _passwordController,
-                           style: TextStyle(color: onGradientColor),
-                          obscureText: !_passwordVisible, // Toggle based on state
+                          style: TextStyle(color: onGradientColor),
+                          obscureText: !_passwordVisible,
                           decoration: AppTheme.inputDecoration(
-                            hintText: 'Password',
+                            hintText: _isLogin ? 'Password' : 'Password (8+ chars: A-Z, a-z, 0-9, symbol)',
                             labelText: 'Password',
                             isDarkMode: isDarkMode,
                             prefixIcon: Icons.lock_outline_rounded,
-                             // Add suffix icon to toggle visibility
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _passwordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -322,7 +342,11 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
                           ),
                           validator: (value) {
                             if (value?.isEmpty ?? true) return 'Password is required';
-                            if (!_isLogin && value!.length < 6) return 'Password must be at least 6 characters';
+                            if (!_isLogin) {
+                              if (!_isPasswordStrong(value!)) {
+                                return 'Password must have 8+ characters with at least:\n• 1 uppercase letter\n• 1 lowercase letter\n• 1 number\n• 1 special character';
+                              }
+                            }
                             return null;
                           },
                         ),
@@ -418,18 +442,18 @@ class _AuthenticationScreenState extends State<AuthenticationScreen>
                             onPressed: _isLoading ? null : _submitForm,
                             // Use theme for button, potentially override for primary action emphasis
                             style: currentTheme.elevatedButtonTheme.style?.copyWith(
-                              backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                                (Set<MaterialState> states) {
-                                  if (states.contains(MaterialState.disabled)) {
+                              backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+                                (Set<WidgetState> states) {
+                                  if (states.contains(WidgetState.disabled)) {
                                     return isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300; // Disabled color
                                   }
                                    // Use a contrasting color for the button itself on top of the gradient
                                    return Colors.white.withOpacity(0.9);
                                 },
                               ),
-                              foregroundColor: MaterialStateProperty.resolveWith<Color?>(
-                                (Set<MaterialState> states) {
-                                  if (states.contains(MaterialState.disabled)) {
+                              foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+                                (Set<WidgetState> states) {
+                                  if (states.contains(WidgetState.disabled)) {
                                     return Colors.grey.shade500;
                                   }
                                    // Use primary app color for text on white button
