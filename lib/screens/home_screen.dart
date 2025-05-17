@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Keep for SystemUiOverlayStyle if used by AppBar
+// Keep for SystemUiOverlayStyle if used by AppBar
 import 'package:payment_app/screens/contact_screen.dart';
 import 'package:payment_app/screens/movie_selection_screen.dart';
 import 'package:payment_app/screens/voice_payment_screen.dart';
@@ -11,7 +11,6 @@ import 'package:payment_app/screens/rewards_screen.dart';
 import 'package:payment_app/screens/profile_screen.dart';
 import 'package:payment_app/screens/qr_code_screen.dart';
 import 'package:payment_app/screens/authentication_screen.dart';
-import 'package:payment_app/screens/coming_soon_screen.dart';
 import 'package:payment_app/utils/theme.dart'; // Import OLD AppTheme for constants
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';

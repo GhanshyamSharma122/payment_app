@@ -32,7 +32,7 @@ class SeatSelectionScreen extends StatefulWidget {
 
 class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
   List<List<SeatStatus>> _seatLayout = [];
-  List<String> _userSelectedSeatIds = []; // Stores IDs like "A1", "B2"
+  final List<String> _userSelectedSeatIds = []; // Stores IDs like "A1", "B2"
 
   // Mock layout dimensions
   final int _seatRows = 7;

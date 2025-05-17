@@ -89,9 +89,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final token = await _getToken();
       if (token == null) throw Exception('Auth token not found.');
       final wallet = await getWalletBalance(token);
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _walletData = wallet;
       });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

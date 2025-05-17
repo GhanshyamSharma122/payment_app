@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:payment_app/screens/authentication_screen.dart';
-import 'package:payment_app/utils/theme.dart';
 import 'package:payment_app/utils/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
