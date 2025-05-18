@@ -179,6 +179,42 @@ Future<Map<String, dynamic>> getWalletBalance(String token) async {
   }
 }
 
+// Add Funds to Wallet (Actual API Call)
+Future<Map<String, dynamic>> addFundsToWallet(String token, double amount) async {
+  if (amount <= 0) {
+    throw Exception('Invalid amount: Amount must be greater than zero.');
+  }
+
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/wallet/add'), // Assuming this is the correct endpoint
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': 'Bearer $token',
+    },
+    body: jsonEncode({'amount': amount}),
+  );
+
+  final responseBody = jsonDecode(response.body);
+  if (response.statusCode == 200) {
+    // Assuming the backend returns a body similar to this on success:
+    // {
+    //   "status": "success",
+    //   "message": "Funds added successfully.",
+    //   "transaction_id": "some-uuid",
+    //   "new_balance": 1250.75 
+    // }
+    return {
+      'status': responseBody['status'] ?? 'success', // Default to success if status not in response
+      'message': responseBody['message'] ?? 'Funds added successfully.',
+      'transaction_id': responseBody['transaction_id'] ?? const Uuid().v4(), // Use backend ID or mock
+      'added_amount': amount,
+      'new_balance': responseBody['new_balance'] ?? amount // Use the returned balance or the amount added
+    };
+  } else {
+    throw Exception('Failed to add funds: ${responseBody['error'] ?? responseBody['message'] ?? 'Unknown error'}');
+  }
+}
+
 // ✅ Search User by Phone Number
 Future<Map<String, dynamic>?> searchUserByPhone(String token, String phoneNumber) async {
   try {
@@ -282,7 +318,7 @@ Future<void> deleteContact(String token, String contactId) async {
     } else {
       try {
         final errorBody = jsonDecode(response.body);
-        throw Exception('Failed to delete contact: ${errorBody['error'] ?? response.body}');
+        throw Exception('Failed to delete contact: ${errorBody['error'] ?? errorBody['message'] ?? 'Unknown error'}');
       } catch (_) {
          throw Exception('Failed to delete contact: ${response.statusCode}');
       }

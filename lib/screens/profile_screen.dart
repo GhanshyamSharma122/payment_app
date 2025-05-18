@@ -7,14 +7,74 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:payment_app/screens/authentication_screen.dart';
 import 'package:payment_app/screens/qr_code_screen.dart'; // Import QR code screen
 import 'package:payment_app/screens/coming_soon_screen.dart'; // Import coming soon screen
+import 'dart:convert'; // Import for jsonDecode
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget { // Changed to StatefulWidget
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState(); // Create state
+}
+
+class _ProfileScreenState extends State<ProfileScreen> { // Create state class
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  Map<String, dynamic>? _userData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() => _isLoading = true);
+    try {
+      final String? userDataString = await _storage.read(key: 'user_data');
+      final String? token = await _storage.read(key: 'auth_token');
+
+      if (userDataString != null && token != null) {
+        final Map<String, dynamic> storedUser = jsonDecode(userDataString);
+        // Optionally: Re-fetch from an API to ensure data is fresh
+        // For now, we'll use stored data and supplement if needed.
+        // final apiUser = await getUserProfile(token); // Assuming you have such a function
+        // setState(() => _userData = apiUser);
+        setState(() => _userData = storedUser);
+      } else {
+        // Handle case where user data or token is not found (e.g., navigate to login)
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const AuthenticationScreen()),
+            (Route<dynamic> route) => false,
+          );
+        }
+      }
+    } catch (e) {
+      print('Error loading user data for profile: $e');
+      // Optionally show an error message to the user
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
+    if (_isLoading) {
+      return Scaffold(
+        appBar: commonAppBar(title: 'Profile', context: context),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Use _userData to populate the UI
+    final String displayName = _userData?['username'] ?? _userData?['first_name'] ?? 'User';
+    final String email = _userData?['email'] ?? 'No email available';
+    final String displayInitial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+
     return Scaffold(
       appBar: commonAppBar(title: 'Profile', context: context),
       body: Container(
@@ -31,7 +91,11 @@ class ProfileScreen extends StatelessWidget {
           builder: (context, themeProvider, _) => ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const _ProfileHeader(),
+              _ProfileHeader( // Pass data to _ProfileHeader
+                displayName: displayName,
+                email: email,
+                displayInitial: displayInitial,
+              ),
               const SizedBox(height: 24),
               const _QuickActions(),
               const SizedBox(height: 24),
@@ -140,7 +204,15 @@ class ProfileScreen extends StatelessWidget {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
+  final String displayName;
+  final String email;
+  final String displayInitial;
+
+  const _ProfileHeader({
+    required this.displayName,
+    required this.email,
+    required this.displayInitial,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +233,7 @@ class _ProfileHeader extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              'T', // First letter of testuser
+              displayInitial, // Use dynamic initial
               style: const TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -172,7 +244,7 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'testuser', // Changed from Utkrisht to testuser
+          displayName, // Use dynamic display name
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -181,7 +253,7 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'testuser@example.com', // Changed the email address
+          email, // Use dynamic email
           style: TextStyle(
             fontSize: 16,
             color: isDarkMode ? Colors.white70 : Colors.white.withOpacity(0.7), // Improved visibility

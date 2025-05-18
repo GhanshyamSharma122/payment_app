@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:payment_app/services/api_service.dart';
 import 'package:payment_app/utils/theme.dart';
@@ -11,6 +10,9 @@ class PaymentScreen extends StatefulWidget {
   final bool identifierIsUserId;
   final double? amount;
   final String? description; // Add this parameter
+  final bool isBillPayment; // New parameter
+  final String? billType; // New parameter
+  final String? billAccountNumber; // New parameter
 
   const PaymentScreen({
     super.key,
@@ -18,6 +20,9 @@ class PaymentScreen extends StatefulWidget {
     this.identifierIsUserId = false,
     this.amount,
     this.description, // Add this
+    this.isBillPayment = false, // Default to false
+    this.billType,
+    this.billAccountNumber,
   });
 
   @override
@@ -251,7 +256,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedRecipientId == null || _selectedRecipientId!.isEmpty) {
+    // For bill payments, recipient verification might be different or not required in the same way.
+    // The backend might handle biller details based on billType and billAccountNumber.
+    if (!widget.isBillPayment && (_selectedRecipientId == null || _selectedRecipientId!.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please verify recipient first.'),
@@ -266,29 +273,56 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final token = await _getToken();
       if (token == null) throw Exception('Auth token missing.');
       final amount = double.parse(_amountController.text);
-      final description = _noteController.text.trim().isNotEmpty ? _noteController.text.trim() : "Payment from TapKaro app";
+      final description = _noteController.text.trim().isNotEmpty 
+                          ? _noteController.text.trim() 
+                          : (widget.isBillPayment 
+                              ? '${widget.billType} Bill for ${widget.billAccountNumber}' 
+                              : "Payment from TapKaro app");
+      
       final senderId = _walletData?['user_id'] ?? "";
       if (senderId.isEmpty) print("Warning: Sender ID missing.");
 
+      // Use a placeholder or specific biller ID for bill payments if your API requires a recipientId
+      final String effectiveRecipientId = widget.isBillPayment 
+          ? "biller_${widget.billType?.toLowerCase().replaceAll(' ', '_') ?? 'unknown'}" 
+          : _selectedRecipientId!;
+
+      // Potentially use a different API endpoint or add parameters for bill payment
       final response = await initiateOnlinePayment(
         token,
         senderId,
-        _selectedRecipientId!,
+        effectiveRecipientId, // Use effectiveRecipientId
         amount,
         description: description,
+        // You might need to pass additional parameters for bill payment to your API service
+        // e.g., transaction_type: widget.isBillPayment ? "BILL_PAYMENT" : "P2P",
+        // billDetails: widget.isBillPayment ? { "type": widget.billType, "account": widget.billAccountNumber } : null,
       );
 
       if (mounted) {
-        final recipientNameForDialog = _recipientDisplayName.isNotEmpty && !_recipientDisplayName.contains('...') ? _recipientDisplayName : 'Recipient';
+        final recipientNameForDialog = widget.isBillPayment 
+            ? widget.billType ?? 'Biller' 
+            : (_recipientDisplayName.isNotEmpty && !_recipientDisplayName.contains('...') 
+                ? _recipientDisplayName 
+                : 'Recipient');
+        
         _showSuccessDialog(response, amount.toStringAsFixed(2), recipientNameForDialog);
         _amountController.clear();
         _noteController.clear();
-        _phoneNumberController.clear();
-        setState(() {
-          _selectedRecipientId = null;
-          _recipientDisplayName = '';
-        });
-        _fetchWalletBalance();
+        
+        if (!widget.isBillPayment) {
+          _phoneNumberController.clear();
+          setState(() {
+            _selectedRecipientId = null;
+            _recipientDisplayName = '';
+          });
+        }
+        _fetchWalletBalance(); // Refresh wallet balance on this screen
+
+        // If it was a bill payment, pop with success to also refresh WalletScreen via BillDetailsScreen
+        if (widget.isBillPayment) {
+          Navigator.pop(context, 'success'); // Pop PaymentScreen, returning to BillDetailsScreen
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -393,9 +427,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final Color textOnGradient = isDarkMode ? AppTheme.textPrimaryColorDark : Colors.white;
 
+    // Determine AppBar title based on payment type
+    final String appBarTitle = widget.isBillPayment ? 'Pay ${widget.billType} Bill' : 'Send Money';
+
     return Scaffold(
       backgroundColor: isDarkMode ? AppTheme.darkBackgroundColor : AppTheme.backgroundColor,
-      appBar: commonAppBar(title: 'Send Money', context: context),
+      appBar: commonAppBar(title: appBarTitle, context: context), // Use dynamic title
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -488,109 +525,116 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         const SizedBox(height: 30),
                         Divider(color: Colors.white.withOpacity(0.15)),
                         const SizedBox(height: 20),
-                        Text('Send To', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textOnGradient.withOpacity(0.9))),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _phoneNumberController,
-                          style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87, fontSize: 16),
-                          keyboardType: TextInputType.text,
-                          decoration: AppTheme.inputDecoration(
-                            hintText: 'Enter phone, username or email',
-                            isDarkMode: isDarkMode,
-                          ).copyWith(
-                            fillColor: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.8),
-                            prefixIcon: Icon(Icons.person_outline, color: isDarkMode ? Colors.white70 : Colors.grey.shade600),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: isDarkMode
-                                  ? BorderSide(color: Colors.white.withOpacity(0.2), width: 1)
-                                  : BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: isDarkMode
-                                  ? BorderSide(color: Colors.white.withOpacity(0.5), width: 1)
-                                  : BorderSide(color: AppTheme.accentColor, width: 1),
-                            ),
-                          ),
-                          autovalidateMode: AutovalidateMode.disabled,
-                          onChanged: (value) {
-                            if (_selectedRecipientId != null) {
-                              setState(() {
-                                _selectedRecipientId = null;
-                                _recipientDisplayName = '';
-                              });
-                            }
-                          },
-                          validator: (value) {
-                            if (_selectedRecipientId == null && (value == null || value.isEmpty)) {
-                              return 'Enter recipient identifier';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        Row(children: [
-                          Expanded(
-                              child: ElevatedButton.icon(
-                            onPressed: _isVerifyingRecipient ? null : _searchRecipient,
-                            icon: _isVerifyingRecipient
-                                ? const SizedBox(
-                                    height: 18,
-                                    width: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: AppTheme.accentColor))
-                                : Icon(Icons.search,
-                                    size: 20, color: isDarkMode ? Colors.white : AppTheme.accentColor),
-                            label: Text('Verify User',
-                                style: TextStyle(
-                                    color: isDarkMode ? Colors.white : AppTheme.accentColor)),
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: isDarkMode
-                                    ? AppTheme.darkSurfaceColor.withOpacity(0.8)
-                                    : Colors.white.withOpacity(0.8),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
-                                side: BorderSide(color: AppTheme.accentColor.withOpacity(0.5))),
-                          )),
-                          const SizedBox(width: 10),
-                          Expanded(
-                              child: ElevatedButton.icon(
-                            onPressed: _navigateToContactScreen,
-                            icon: Icon(Icons.contacts, size: 20, color: Colors.white),
-                            label: Text('Contacts', style: TextStyle(color: Colors.white)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.accentColor,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                          )),
-                        ]),
-                        if (_recipientDisplayName.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12.0),
-                            child: Text(
-                              _recipientDisplayName,
-                              style: TextStyle(
-                                color: (_selectedRecipientId != null)
-                                    ? (isDarkMode
-                                        ? Colors.greenAccent.shade100
-                                        : Colors.green.shade700)
-                                    : (isDarkMode
-                                        ? Colors.orangeAccent.shade100
-                                        : Colors.orange.shade900),
-                                fontWeight: FontWeight.w500,
-                                fontSize: 14,
+                        // Conditionally show recipient selection for P2P, hide for bill payment
+                        if (!widget.isBillPayment)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Send To', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textOnGradient.withOpacity(0.9))),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _phoneNumberController,
+                                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black87, fontSize: 16),
+                                keyboardType: TextInputType.text,
+                                decoration: AppTheme.inputDecoration(
+                                  hintText: 'Enter phone, username or email',
+                                  isDarkMode: isDarkMode,
+                                ).copyWith(
+                                  fillColor: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.8),
+                                  prefixIcon: Icon(Icons.person_outline, color: isDarkMode ? Colors.white70 : Colors.grey.shade600),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: isDarkMode
+                                        ? BorderSide(color: Colors.white.withOpacity(0.2), width: 1)
+                                        : BorderSide.none,
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: isDarkMode
+                                        ? BorderSide(color: Colors.white.withOpacity(0.5), width: 1)
+                                        : BorderSide(color: AppTheme.accentColor, width: 1),
+                                  ),
+                                ),
+                                autovalidateMode: AutovalidateMode.disabled,
+                                onChanged: (value) {
+                                  if (_selectedRecipientId != null) {
+                                    setState(() {
+                                      _selectedRecipientId = null;
+                                      _recipientDisplayName = '';
+                                    });
+                                  }
+                                },
+                                validator: (value) {
+                                  if (_selectedRecipientId == null && (value == null || value.isEmpty)) {
+                                    return 'Enter recipient identifier';
+                                  }
+                                  return null;
+                                },
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              Row(children: [
+                                Expanded(
+                                    child: ElevatedButton.icon(
+                                  onPressed: _isVerifyingRecipient ? null : _searchRecipient,
+                                  icon: _isVerifyingRecipient
+                                      ? const SizedBox(
+                                          height: 18,
+                                          width: 18,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2, color: AppTheme.accentColor))
+                                      : Icon(Icons.search,
+                                          size: 20, color: isDarkMode ? Colors.white : AppTheme.accentColor),
+                                  label: Text('Verify User',
+                                      style: TextStyle(
+                                          color: isDarkMode ? Colors.white : AppTheme.accentColor)),
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: isDarkMode
+                                          ? AppTheme.darkSurfaceColor.withOpacity(0.8)
+                                          : Colors.white.withOpacity(0.8),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12)),
+                                      side: BorderSide(color: AppTheme.accentColor.withOpacity(0.5))),
+                                )),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                    child: ElevatedButton.icon(
+                                  onPressed: _navigateToContactScreen,
+                                  icon: Icon(Icons.contacts, size: 20, color: Colors.white),
+                                  label: Text('Contacts', style: TextStyle(color: Colors.white)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.accentColor,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12)),
+                                  ),
+                                )),
+                              ]),
+                              if (_recipientDisplayName.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 12.0),
+                                  child: Text(
+                                    _recipientDisplayName,
+                                    style: TextStyle(
+                                      color: (_selectedRecipientId != null)
+                                          ? (isDarkMode
+                                              ? Colors.greenAccent.shade100
+                                              : Colors.green.shade700)
+                                          : (isDarkMode
+                                              ? Colors.orangeAccent.shade100
+                                              : Colors.orange.shade900),
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 24),
+                            ],
                           ),
-                        const SizedBox(height: 24),
                         Text('Note (Optional)',
                             style: TextStyle(
                                 fontSize: 18,
@@ -637,7 +681,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     height: 55,
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: (_isLoading || _isVerifyingRecipient) ? null : _processPayment,
+                      onPressed: (_isLoading || (!widget.isBillPayment && _isVerifyingRecipient)) ? null : _processPayment, // Adjust loading check for bill payment
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: AppTheme.primaryColor,

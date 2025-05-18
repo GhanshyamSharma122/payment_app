@@ -95,30 +95,31 @@ class AppTheme {
   static final ThemeData _lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    primaryColor: primaryColor, // Uses top-level constant
+    primaryColor: primaryColor, 
     colorScheme: ColorScheme.light(
       primary: primaryColor,
       secondary: accentColor,
-      surface: Colors.white, // Old definition used white background
+      surface: Colors.white, 
+      background: backgroundColor, // Added from your AppTheme constants
       error: errorColor,
-      // Add on... colors based on the above standard light scheme
-      onPrimary: Colors.white,
-      onSecondary: Colors.white,
-      onSurface: Colors.black, // Text on white background
+      onPrimary: Colors.white, // Text on primary color (e.g., buttons)
+      onSecondary: Colors.white, // Text on accent color
+      onSurface: Colors.black, // Text on surface color (e.g., cards)
+      onBackground: textPrimaryColorLight, // Text on background color (scaffold)
       onError: Colors.white,
     ),
-    scaffoldBackgroundColor: Colors.white, // Old definition used white
-    appBarTheme: const AppBarTheme( // Old definition
-      backgroundColor: Colors.white,
+    scaffoldBackgroundColor: backgroundColor, // Use AppTheme.backgroundColor for light theme scaffold
+    appBarTheme: AppBarTheme( 
+      backgroundColor: primaryColor, // Use AppTheme.primaryColor for AppBar
       elevation: 0,
-      iconTheme: IconThemeData(color: Colors.black),
-      titleTextStyle: TextStyle(
-        fontFamily: 'Poppins', // Replace font
-        color: Colors.black,
+      iconTheme: const IconThemeData(color: Colors.white), // White icons on primaryColor AppBar
+      titleTextStyle: const TextStyle(
+        fontFamily: 'Poppins',
+        color: Colors.white, // White title on primaryColor AppBar
         fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
-       systemOverlayStyle: SystemUiOverlayStyle.dark, // Dark icons for light status bar
+       systemOverlayStyle: SystemUiOverlayStyle.light, // Light content (e.g., time, battery) for dark status bar if AppBar is dark
     ),
     bottomSheetTheme: const BottomSheetThemeData( // Old definition
       backgroundColor: Colors.white,
@@ -160,16 +161,16 @@ class AppTheme {
       labelStyle: TextStyle(color: Colors.black54), // Default label
       errorStyle: TextStyle(color: errorColor), // Use errorColor constant
     ),
-    elevatedButtonTheme: ElevatedButtonThemeData( // Old definition
+    elevatedButtonTheme: ElevatedButtonThemeData( 
       style: ElevatedButton.styleFrom(
-        elevation: 0,
-        backgroundColor: primaryColor, // Use primaryColor constant
-        foregroundColor: Colors.white, // Text on button
+        elevation: 2, // Added slight elevation for better visibility
+        backgroundColor: accentColor, // Use accentColor for main action buttons
+        foregroundColor: Colors.white, 
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         minimumSize: const Size(double.infinity, 50),
-         textStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600) // Replace font
+         textStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600)
       ),
     ),
      textButtonTheme: TextButtonThemeData( // Added default light TextButtonTheme
@@ -191,25 +192,27 @@ class AppTheme {
   static final ThemeData _darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    primaryColor: darkPrimaryColor, // Your top-level constant
-    colorScheme: ColorScheme.dark( // Old definition
-      primary: Colors.white,
-      secondary: Colors.grey.shade200,
-      surface: darkSurfaceColor.withOpacity(0.7), // Uses darkBackgroundColor constant
-      error: errorColor, // Uses errorColor constant
-      onPrimary: darkPrimaryColor,
-      onSecondary: darkPrimaryColor,
-      onSurface: Colors.white,
-      onError: Colors.black, // Text on error
+    primaryColor: darkPrimaryColor, 
+    colorScheme: ColorScheme.dark( 
+      primary: darkPrimaryColor, // Adjusted to match your dark theme constants
+      secondary: darkAccentColor,
+      surface: darkSurfaceColor, 
+      background: darkBackgroundColor,
+      error: errorColor, 
+      onPrimary: textPrimaryColorDark,
+      onSecondary: textPrimaryColorDark,
+      onSurface: textPrimaryColorDark,
+      onBackground: textPrimaryColorDark,
+      onError: Colors.black, 
     ),
-    scaffoldBackgroundColor: darkBackgroundColor, // Uses darkBackgroundColor constant
-    appBarTheme: AppBarTheme( // Old definition
-      backgroundColor: Colors.transparent,
+    scaffoldBackgroundColor: darkBackgroundColor, 
+    appBarTheme: AppBarTheme( 
+      backgroundColor: darkPrimaryColor, // Use darkPrimaryColor for AppBar in dark theme
       elevation: 0,
-      iconTheme: const IconThemeData(color: Colors.white),
-      titleTextStyle: const TextStyle(
-        fontFamily: 'Poppins', // Replace font
-        color: Colors.white,
+      iconTheme: IconThemeData(color: textPrimaryColorDark),
+      titleTextStyle: TextStyle(
+        fontFamily: 'Poppins',
+        color: textPrimaryColorDark,
         fontSize: 20,
         fontWeight: FontWeight.bold,
       ),
@@ -255,16 +258,16 @@ class AppTheme {
       labelStyle: const TextStyle(color: Colors.white70),
        errorStyle: TextStyle(color: errorColor), // Use errorColor constant
     ),
-    elevatedButtonTheme: ElevatedButtonThemeData( // Old definition
+    elevatedButtonTheme: ElevatedButtonThemeData( 
       style: ElevatedButton.styleFrom(
-        elevation: 0,
-        backgroundColor: Colors.white.withOpacity(0.15),
-        foregroundColor: Colors.white,
+        elevation: 2,
+        backgroundColor: darkAccentColor, // Use darkAccentColor for buttons in dark theme
+        foregroundColor: textPrimaryColorDark,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         minimumSize: const Size(double.infinity, 50),
-        textStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600) // Replace font
+        textStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600)
       ),
     ),
     textButtonTheme: TextButtonThemeData( // Old definition

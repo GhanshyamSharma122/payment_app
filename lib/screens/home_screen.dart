@@ -10,11 +10,13 @@ import 'package:payment_app/screens/transaction_history_screen.dart';
 import 'package:payment_app/screens/rewards_screen.dart';
 import 'package:payment_app/screens/profile_screen.dart';
 import 'package:payment_app/screens/qr_code_screen.dart';
-import 'package:payment_app/screens/authentication_screen.dart';
+// import 'package:payment_app/screens/authentication_screen.dart'; // Removed unused import
 import 'package:payment_app/utils/theme.dart'; // Import OLD AppTheme for constants
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart'; // Keep shimmer import for wallet balance loading
+import 'package:payment_app/screens/bill_payment_screen.dart'; // Added for Pay Bills
+import 'package:payment_app/screens/wallet_screen.dart'; // Added for Wallet navigation
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -203,10 +205,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (balance == null) return '0.00'; if (balance is num) return balance.toStringAsFixed(2); if (balance is String) { try { return double.parse(balance).toStringAsFixed(2); } catch (e) { return balance.toString(); } } return '0.00';
   }
 
-  Future<void> _logout() async { // Keep as is
-     await _storage.deleteAll(); if (mounted) { Navigator.of(context).pushAndRemoveUntil( MaterialPageRoute(builder: (_) => const AuthenticationScreen()), (route) => false,); }
-  }
-
   // Revert Notification Modal Style to OLD Code
   void _showNotifications() { // Reverted styling
     showModalBottomSheet( context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (context) => Container( constraints: BoxConstraints( maxHeight: MediaQuery.of(context).size.height * 0.7, ), decoration: BoxDecoration( color: Theme.of(context).brightness == Brightness.light ? Colors.white : AppTheme.primaryColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(20)), ),
@@ -244,28 +242,242 @@ class _HomeScreenState extends State<HomeScreen> {
               physics: const AlwaysScrollableScrollPhysics(), // Ensure scrolling is always enabled for refresh
               children: [
                 // --- App Bar Row (OLD STYLE) ---
-                Row( mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [ Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Hello,', style: TextStyle( fontSize: 16, color: Colors.white, fontWeight: FontWeight.w400,), ), Text( _username, style: const TextStyle( fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white, ), ), ], ), Row( children: [ Stack( children: [ IconButton( icon: const Icon(Icons.notifications_outlined), color: Colors.white, onPressed: _showNotifications, ),
-                             if (!_isLoadingWallet && !_isLoadingTransactions && !_isRefreshing && unreadNotifications > 0) // Ensure loading is complete before showing badge
-                               Positioned( right: 8, top: 8, child: Container( padding: const EdgeInsets.all(4), decoration: const BoxDecoration( color: Colors.red, shape: BoxShape.circle, ), child: Text( unreadNotifications.toString(), style: const TextStyle( fontSize: 10, color: Colors.white,), ), ), ), ], ), const SizedBox(width: 8), GestureDetector( onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const ProfileScreen(),),), child: const Icon( Icons.person_outline, color: Colors.white, size: 28,), ), ], ), ], ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Hello,',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          _username,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Stack(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications_outlined),
+                              color: Colors.white,
+                              onPressed: _showNotifications,
+                            ),
+                            if (!_isLoadingWallet && !_isLoadingTransactions && !_isRefreshing && unreadNotifications > 0) 
+                              Positioned(
+                                right: 8,
+                                top: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    unreadNotifications.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context, 
+                            MaterialPageRoute(
+                              builder: (_) => const ProfileScreen(),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.person_outline,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 24),
 
                 // --- Wallet Card (OLD STYLE) ---
-                 Container( height: 200, decoration: BoxDecoration( gradient: LinearGradient( colors: [ AppTheme.primaryColor.withOpacity(0.9), AppTheme.accentColor.withOpacity(0.6), ], begin: Alignment.topLeft, end: Alignment.bottomRight, ), borderRadius: BorderRadius.circular(20), boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 5), ), ], ),
-                    child: Stack( children: [ Positioned( right: -50, top: -50, child: Container( width: 200, height: 200, decoration: BoxDecoration( shape: BoxShape.circle, color: Colors.white.withOpacity(0.1), ), ), ), Padding( padding: const EdgeInsets.all(24.0), child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Row( children: [ Icon( Icons.account_balance_wallet, color: Colors.white, size: 24, ), SizedBox(width: 8), Text( 'Available Balance', style: TextStyle( fontSize: 16, color: Colors.white70, ), ), ], ), const SizedBox(height: 16),
-                                  // Keep Shimmer for balance loading
-                                  _isLoadingWallet ? Shimmer.fromColors( baseColor: Colors.white.withOpacity(0.5), highlightColor: Colors.white.withOpacity(0.8), child: Container( width: 150, height: 38, decoration: BoxDecoration(color: Colors.white.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),))
-                                  : Text( _walletData==null?'Error':'₹${_formatBalance(_walletData?['balance'])}', style: const TextStyle( fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white, ), ), const Spacer(), Row( mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                                      _WalletActionButton( icon: Icons.qr_code_scanner, label: 'Scan & Pay', onTap: () => Navigator.push( context, MaterialPageRoute( builder: (_) => const QRCodeScreen(initialTabIndex: 1), ), ), ),
-                                      _WalletActionButton( icon: Icons.qr_code, label: 'My QR', onTap: () => Navigator.push( context, MaterialPageRoute( builder: (_) => const QRCodeScreen(initialTabIndex: 0), ), ), ), ], ), ], ), ), ], ), ),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WalletScreen())),
+                  child: Container(
+                    height: 200, 
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor.withOpacity(0.9),
+                          AppTheme.accentColor.withOpacity(0.6),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          right: -50,
+                          top: -50,
+                          child: Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.account_balance_wallet,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Available Balance',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              // Keep Shimmer for balance loading
+                              _isLoadingWallet
+                                  ? Shimmer.fromColors(
+                                      baseColor: Colors.white.withOpacity(0.5),
+                                      highlightColor: Colors.white.withOpacity(0.8),
+                                      child: Container(
+                                        width: 150,
+                                        height: 38,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.3),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      _walletData==null?'Error':'₹${_formatBalance(_walletData?['balance'])}',
+                                      style: const TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                              const Spacer(),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _WalletActionButton(
+                                    icon: Icons.qr_code_scanner,
+                                    label: 'Scan & Pay',
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const QRCodeScreen(initialTabIndex: 1),
+                                      ),
+                                    ),
+                                  ),
+                                  _WalletActionButton(
+                                    icon: Icons.qr_code,
+                                    label: 'My QR',
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const QRCodeScreen(initialTabIndex: 0),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-                 // --- Rewards Button (OLD STYLE) ---
+                // --- Rewards Button (OLD STYLE) ---
                  Padding( padding: const EdgeInsets.only(top: 12.0), child: _WalletActionButton( icon: Icons.card_giftcard, label: 'Rewards', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RewardsScreen())), color: AppTheme.accentColor.withOpacity(0.15), ), ),
                 const SizedBox(height: 24),
 
                 // --- Quick Actions Section (OLD STYLE) ---
                  Text( 'Quick Actions', style: TextStyle( fontSize: 18, fontWeight: FontWeight.bold, color: textOnGradient, ), ), // Use white/light text
                 const SizedBox(height: 12),
-                GridView.count( shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 3, mainAxisSpacing: 16, crossAxisSpacing: 16, children: [ _QuickActionCard( icon: Icons.send, label: 'Send Money', onTap: () => Navigator.push( context, MaterialPageRoute(builder: (_) => const PaymentScreen()), ), ), _QuickActionCard( icon: Icons.history, label: 'History', onTap: () => Navigator.push( context, MaterialPageRoute( builder: (_) => const TransactionHistoryScreen(), ), ), ), _QuickActionCard( icon: Icons.mic_rounded  , label: 'Voice\nPay', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const VoicePaymentScreen(),),),), _QuickActionCard( icon: Icons.contacts, label: 'Contacts', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const ContactScreen(),),),), _QuickActionCard( icon: Icons.movie, label: 'Movies', onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const MovieSelectionScreen(),),),), _QuickActionCard( icon: Icons.more_horiz, label: 'More', onTap: () {}, ), ], ),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  children: <Widget>[ 
+                    _QuickActionCard( 
+                      icon: Icons.send, 
+                      label: 'Send Money', 
+                      onTap: () => Navigator.push( context, MaterialPageRoute(builder: (_) => const PaymentScreen()), ), 
+                    ),
+                    _QuickActionCard( 
+                      icon: Icons.history, 
+                      label: 'History', 
+                      onTap: () => Navigator.push( context, MaterialPageRoute( builder: (_) => const TransactionHistoryScreen(), ), ),
+                    ),
+                    _QuickActionCard( 
+                      icon: Icons.mic_rounded, 
+                      label: 'Voice\nPay', 
+                      onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const VoicePaymentScreen(),),),
+                    ),
+                    _QuickActionCard( 
+                      icon: Icons.contacts, 
+                      label: 'Contacts', 
+                      onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const ContactScreen(),),),
+                    ),
+                    _QuickActionCard( 
+                      icon: Icons.movie, 
+                      label: 'Movies', 
+                      onTap: () => Navigator.push(context, MaterialPageRoute( builder: (_) => const MovieSelectionScreen(),),),
+                    ),
+                    _QuickActionCard( 
+                      icon: Icons.receipt_long, // Added icon for Pay Bills
+                      label: 'Pay Bills', // Added label for Pay Bills
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BillPaymentScreen())),
+                    ),
+                  ], 
+                ), 
                  const SizedBox(height: 24),
 
                  // --- Recent Transactions Section (OLD STYLE Card Header) ---
