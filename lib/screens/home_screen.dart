@@ -17,6 +17,7 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart'; // Keep shimmer import for wallet balance loading
 import 'package:payment_app/screens/bill_payment_screen.dart'; // Added for Pay Bills
 import 'package:payment_app/screens/wallet_screen.dart'; // Added for Wallet navigation
+import 'package:payment_app/screens/travel.dart'; // Added for Travel navigation
 
 class HomeScreen extends StatefulWidget {
 const HomeScreen({super.key});
@@ -552,6 +553,14 @@ return Scaffold(
                       await _loadRecentTransactions();
                     }
                   },
+                ),
+                _QuickActionCard( 
+                  icon: Icons.card_travel, 
+                  label: 'Travel', 
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TravelScreen()),
+                  ),
                 ),
               ], 
             ), 

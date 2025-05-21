@@ -27,6 +27,7 @@ dependencies:
   intl: ^0.18.1
   shimmer: ^3.0.0
   speech_to_text: ^7.0.0
+  flutter_native_splash: ^2.4.4
 
 dev_dependencies:
   flutter_test:
@@ -40,3 +41,12 @@ flutter:
     - assets/images/
     - assets/movie/
 
+flutter_native_splash:
+  color: "#000000" # Background color of the splash screen
+  image: assets/images/splash_logo.png # Path to your splash screen logo
+  android: true
+  ios: true
+  web: false
+  android_gravity: center # Center the logo on Android
+  ios_content_mode: center # Center the logo on iOS
+  fullscreen: true # Make the splash screen fullscreen

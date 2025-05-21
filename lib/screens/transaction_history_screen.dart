@@ -6,6 +6,7 @@ import 'package:payment_app/utils/common_widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart'; // For loading shimmer effect
+import 'package:payment_app/screens/transaction_detail_screen.dart'; // Import the transaction detail screen
 
 class TransactionHistoryScreen extends StatefulWidget {
   const TransactionHistoryScreen({super.key});
@@ -370,8 +371,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                                       ),
                                       child: InkWell( // Added InkWell for potential tap action
                                         onTap: () {
-                                          // TODO: Implement transaction detail view if needed
-                                          print("Tapped transaction: ${transaction['id']}");
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => TransactionDetailScreen(transaction: transaction),
+                                            ),
+                                          );
                                         },
                                         borderRadius: BorderRadius.circular(12),
                                         child: Padding(
@@ -445,4 +450,4 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       ),
     );
   }
-}
+} 
