@@ -179,14 +179,14 @@ Future<Map<String, dynamic>> getWalletBalance(String token) async {
   }
 }
 
-// Add Funds to Wallet (Actual API Call)
+
 Future<Map<String, dynamic>> addFundsToWallet(String token, double amount) async {
   if (amount <= 0) {
     throw Exception('Invalid amount: Amount must be greater than zero.');
   }
 
   final response = await http.post(
-    Uri.parse('$baseUrl/api/wallet/add'), // Assuming this is the correct endpoint
+    Uri.parse('$baseUrl/api/wallet/topup'), // ✅ Corrected endpoint
     headers: {
       'Content-Type': 'application/json; charset=UTF-8',
       'Authorization': 'Bearer $token',
@@ -196,22 +196,17 @@ Future<Map<String, dynamic>> addFundsToWallet(String token, double amount) async
 
   final responseBody = jsonDecode(response.body);
   if (response.statusCode == 200) {
-    // Assuming the backend returns a body similar to this on success:
-    // {
-    //   "status": "success",
-    //   "message": "Funds added successfully.",
-    //   "transaction_id": "some-uuid",
-    //   "new_balance": 1250.75 
-    // }
+    final wallet = responseBody['wallet'] ?? {};
     return {
-      'status': responseBody['status'] ?? 'success', // Default to success if status not in response
-      'message': responseBody['message'] ?? 'Funds added successfully.',
-      'transaction_id': responseBody['transaction_id'] ?? const Uuid().v4(), // Use backend ID or mock
+      'status': 'success',
+      'message': responseBody['message'] ?? 'Balance topped up successfully.',
+      'transaction_id': responseBody['transaction_id'],
       'added_amount': amount,
-      'new_balance': responseBody['new_balance'] ?? amount // Use the returned balance or the amount added
+      'new_balance': wallet['balance'],
+      'updated_at': responseBody['updated_at'],
     };
   } else {
-    throw Exception('Failed to add funds: ${responseBody['error'] ?? responseBody['message'] ?? 'Unknown error'}');
+    throw Exception('Failed to top up wallet: ${responseBody['error'] ?? responseBody['message'] ?? 'Unknown error'}');
   }
 }
 
