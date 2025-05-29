@@ -28,6 +28,7 @@ dependencies:
   shimmer: ^3.0.0
   speech_to_text: ^7.0.0
   flutter_native_splash: ^2.4.4
+  emailjs: ^4.0.0
 
 dev_dependencies:
   flutter_test:
