@@ -115,8 +115,8 @@ class _SeatSelectionScreenState extends State<SeatSelectionScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => PaymentScreen(
-          prefilledIdentifier: 'Movie Ticket Purchase',
-          identifierIsUserId: false,
+           prefilledIdentifier: '88b0eb61-79d1-4c1d-a642-5abc544e59fe', // The specific biller ID
+           identifierIsUserId: true,
           amount: totalAmount,
           description: paymentDescription,
         ),
