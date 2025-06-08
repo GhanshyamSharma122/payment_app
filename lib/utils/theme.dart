@@ -99,13 +99,11 @@ class AppTheme {
     colorScheme: ColorScheme.light(
       primary: primaryColor,
       secondary: accentColor,
-      surface: Colors.white, 
-      background: backgroundColor, // Added from your AppTheme constants
+      surface: Colors.white, // Added from your AppTheme constants
       error: errorColor,
       onPrimary: Colors.white, // Text on primary color (e.g., buttons)
       onSecondary: Colors.white, // Text on accent color
-      onSurface: Colors.black, // Text on surface color (e.g., cards)
-      onBackground: textPrimaryColorLight, // Text on background color (scaffold)
+      onSurface: Colors.black, // Text on background color (scaffold)
       onError: Colors.white,
     ),
     scaffoldBackgroundColor: backgroundColor, // Use AppTheme.backgroundColor for light theme scaffold
@@ -196,13 +194,11 @@ class AppTheme {
     colorScheme: ColorScheme.dark( 
       primary: darkPrimaryColor, // Adjusted to match your dark theme constants
       secondary: darkAccentColor,
-      surface: darkSurfaceColor, 
-      background: darkBackgroundColor,
+      surface: darkSurfaceColor,
       error: errorColor, 
       onPrimary: textPrimaryColorDark,
       onSecondary: textPrimaryColorDark,
       onSurface: textPrimaryColorDark,
-      onBackground: textPrimaryColorDark,
       onError: Colors.black, 
     ),
     scaffoldBackgroundColor: darkBackgroundColor, 

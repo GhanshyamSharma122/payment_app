@@ -177,8 +177,9 @@ class _BusSeatSelectionScreenState extends State<BusSeatSelectionScreen> {
                   if (row < _rows) { // Regular 2x2 rows
                     if (col == 2) return Container(); // Aisle
                     String seatLetter = "";
-                    if (col == 0) seatLetter = "A";
-                    else if (col == 1) seatLetter = "B";
+                    if (col == 0) {
+                      seatLetter = "A";
+                    } else if (col == 1) seatLetter = "B";
                     else if (col == 3) seatLetter = "C";
                     else if (col == 4) seatLetter = "D";
                     String seatId = "${row + 1}$seatLetter";
